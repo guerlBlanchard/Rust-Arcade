@@ -67,14 +67,16 @@ impl Bar {
 
 struct Ball {
     position: Vector2f,
-    size: Vector2f
+    size: Vector2f,
+    velocity: Vector2f
 }
 
 impl Ball {
     fn new(ballposition: Vector2f) -> Ball {
         Ball {
             position: ballposition,
-            size: Vector2f(50.0, 50.0)
+            size: Vector2f(10.0, 10.0),
+            velocity: Vector2f(1.0, 1.0)
         }
     }
     
@@ -91,6 +93,20 @@ impl Ball {
         );
         mesh.draw(&mut frame.as_target());
     }
+
+    fn move_ball(&mut self, player1_info: &Bar, player2_info: &Bar) {
+        self.position.0 += 2.0 * self.velocity.0;
+        self.position.1 += 1.0 * self.velocity.1;
+        if self.position.1 > 1014.0 || self.position.1 < 0.0 {
+            self.velocity.1 *= -1.0
+        }
+        if self.position.0 + self.size.0 >= player2_info.position.0 && (self.position.1 > player2_info.position.1 && self.position.1 < player2_info.position.1 + player2_info.size.1) {
+            self.velocity.0 *= -1.0;
+        }
+        if self.position.0 + self.size.0 <= player1_info.position.0 + player1_info.size.0 && (self.position.1 > player1_info.position.1 && self.position.1 < player1_info.position.1 + player1_info.size.1) {
+            self.velocity.0 *= -1.0;
+        }
+    }
 }
 
 struct Pong {
@@ -105,7 +121,6 @@ impl Game for Pong {
     type LoadingScreen = (); // No loading screen
 
     fn interact(&mut self, input: &mut CustomInput, _window: &mut Window) {
-        println!("{:?}", input.keys_pressed);
         for key in input.keys_pressed.iter() {
             match key {
                 KeyCode::W => {
@@ -128,8 +143,7 @@ impl Game for Pong {
     fn load(_window: &Window) -> Task<Pong> {
         let character_1 = Bar::new(Vector2f(10.0, 5.0));
         let character_2 = Bar::new(Vector2f(1250.0, 5.0));
-        let ball = Ball::new(Vector2f(30.0, 30.0));
-        // Load your game assets here. Check out the `load` module!
+        let ball = Ball::new(Vector2f(500.0, 500.0));
         Task::succeed(|| Pong {
             player1: character_1,
             player2: character_2,
@@ -139,13 +153,12 @@ impl Game for Pong {
     }
 
     fn draw(&mut self, frame: &mut Frame, _timer: &Timer) {
-        // Clear the current frame
         frame.clear(Color::BLACK);
         self.player1.draw_bar(frame);
         self.player2.draw_bar(frame);
         self.ball.draw_ball(frame);
+        self.ball.move_ball(&self.player1, &self.player2)
 
-        // Draw your game here. Check out the `graphics` module!
     }
 }
 
