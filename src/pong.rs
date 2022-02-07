@@ -14,6 +14,8 @@ use coffee::input::{self, keyboard, Input};
 use coffee::load::Task;
 use coffee::{Game, Timer};
 
+use std::collections::HashSet;
+
 pub fn Pong_player(){
     Pong::run(WindowSettings{
         title: String::from("Arcade"),
@@ -36,7 +38,7 @@ impl Bar {
     fn new(barposition: Vector2f) -> Bar {
         Bar {
             position: barposition,
-            size: Vector2f(5.0, 2.0)
+            size: Vector2f(20.0, 100.0)
         }
     }
     
@@ -53,6 +55,14 @@ impl Bar {
         );
         mesh.draw(&mut frame.as_target());
     }
+
+    fn go_up(&mut self) {
+        self.position.1 = self.position.1 - 10.0;
+    }
+
+    fn go_down(&mut self) {
+        self.position.1 = self.position.1 + 10.0;
+    }
 }
 
 struct Ball {
@@ -64,7 +74,7 @@ impl Ball {
     fn new(ballposition: Vector2f) -> Ball {
         Ball {
             position: ballposition,
-            size: Vector2f(5.0, 2.0)
+            size: Vector2f(50.0, 50.0)
         }
     }
     
@@ -91,12 +101,33 @@ struct Pong {
 }
 
 impl Game for Pong {
-    type Input = (); // No input data
+    type Input = CustomInput; // No input data
     type LoadingScreen = (); // No loading screen
+
+    fn interact(&mut self, input: &mut CustomInput, _window: &mut Window) {
+        println!("{:?}", input.keys_pressed);
+        for key in input.keys_pressed.iter() {
+            match key {
+                KeyCode::W => {
+                    self.player1.go_up();
+                }
+                KeyCode::S => {
+                    self.player1.go_down();
+                }
+                KeyCode::Up => {
+                    self.player2.go_up();
+                }
+                KeyCode::Down => {
+                    self.player2.go_down();
+                }
+                _ => (),
+            }
+        }
+    }
 
     fn load(_window: &Window) -> Task<Pong> {
         let character_1 = Bar::new(Vector2f(10.0, 5.0));
-        let character_2 = Bar::new(Vector2f(50.0, 5.0));
+        let character_2 = Bar::new(Vector2f(1250.0, 5.0));
         let ball = Ball::new(Vector2f(30.0, 30.0));
         // Load your game assets here. Check out the `load` module!
         Task::succeed(|| Pong {
@@ -115,5 +146,46 @@ impl Game for Pong {
         self.ball.draw_ball(frame);
 
         // Draw your game here. Check out the `graphics` module!
+    }
+}
+
+struct CustomInput {
+    cursor_position: Point,
+    mouse_wheel: Point,
+    keys_pressed: HashSet<keyboard::KeyCode>,
+    text_buffer: String,
+}
+
+impl Input for CustomInput {
+    fn new() -> CustomInput {
+        CustomInput {
+            cursor_position: Point::new(0.0, 0.0),
+            mouse_wheel: Point::new(0.0, 0.0),
+            keys_pressed: HashSet::new(),
+            text_buffer: String::new(),
+        }
+    }
+
+    fn update(&mut self, event: input::Event) {
+        match event {
+            input::Event::Keyboard(keyboard_event) => match keyboard_event {
+                keyboard::Event::TextEntered { character } => {
+                    self.text_buffer.push(character);
+                }
+                keyboard::Event::Input { key_code, state } => match state {
+                    input::ButtonState::Pressed => {
+                        self.keys_pressed.insert(key_code);
+                    }
+                    input::ButtonState::Released => {
+                        self.keys_pressed.remove(&key_code);
+                    }
+                },
+            },
+            _ => {}
+        }
+    }
+
+    fn clear(&mut self) {
+        self.text_buffer.clear();
     }
 }
