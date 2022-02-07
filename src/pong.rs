@@ -103,7 +103,7 @@ impl Ball {
         if self.position.0 + self.size.0 >= player2_info.position.0 && (self.position.1 > player2_info.position.1 && self.position.1 < player2_info.position.1 + player2_info.size.1) {
             self.velocity.0 *= -1.0;
         }
-        if self.position.0 + self.size.0 <= player1_info.position.0 + player1_info.size.0 && (self.position.1 > player1_info.position.1 && self.position.1 < player1_info.position.1 + player1_info.size.1) {
+        if self.position.0 <= player1_info.position.0 + player1_info.size.0 && (self.position.1 > player1_info.position.1 && self.position.1 < player1_info.position.1 + player1_info.size.1) {
             self.velocity.0 *= -1.0;
         }
     }
